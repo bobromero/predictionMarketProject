@@ -1,5 +1,5 @@
 param(
-    [string]$ImageName = "my-spring-app",
+    [string]$ImageName = "prediction-market",
     [string]$Tag = "latest"
 )
 
