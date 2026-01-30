@@ -2,11 +2,18 @@ package com.predictionMarket.predictionMarket.kalshi;
 
 public class KalshiEvent {
     String category;
-    String tag;
     String seriesTicker;
     String seriesTitle;
     String eventTicker;
     String eventTitle;
+
+    public KalshiEvent(String category, String seriesTicker, String seriesTitle, String eventTicker, String eventTitle) {
+        this.category = category;
+        this.seriesTicker = seriesTicker;
+        this.seriesTitle = seriesTitle;
+        this.eventTicker = eventTicker;
+        this.eventTitle = eventTitle;
+    }
 
     public String getCategory() {
         return category;
@@ -14,14 +21,6 @@ public class KalshiEvent {
 
     public void setCategory(String category) {
         this.category = category;
-    }
-
-    public String getTag() {
-        return tag;
-    }
-
-    public void setTag(String tag) {
-        this.tag = tag;
     }
 
     public String getSeriesTicker() {

@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -22,7 +21,12 @@ public class KalshiController {
 
 
     @GetMapping(path="/series")
-    public List<String> getSeries(@RequestParam String category,@RequestParam String tag){
-        return kalshiService.getSeriesFromCategoryAndTags(category,List.of(tag));
+    public List<KalshiSeries> getSeries(@RequestParam String category,@RequestParam String tag){
+        return kalshiService.queryKalshiSeries(category,tag);
+    }
+
+    @GetMapping(path="/events")
+    public List<KalshiEvent> getSeries(){
+        return kalshiService.pollRssAndGetKalshiEvents();
     }
 }

@@ -77,6 +77,8 @@ public class AiService {
         return response.getText();
     }
 
+
+
     public String getGrokStories(String prompt){
         log.info("Getting stories for prediction market");
         Map<String, List<String>> categoriesAndTags = kalshiService.getCategoriesAndTags();
