@@ -1,13 +1,11 @@
 package com.predictionMarket.predictionMarket.kalshi;
 
 import com.predictionMarket.predictionMarket.Story.Story;
-import com.predictionMarket.predictionMarket.Story.StoryService;
 import com.predictionMarket.predictionMarket.ai.AiService;
 import com.predictionMarket.predictionMarket.feed.FeedPollingResponse;
 import com.predictionMarket.predictionMarket.feed.FeedPollingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -15,17 +13,15 @@ import org.springframework.web.client.RestClient;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 
 @Service
 public class KalshiService {
-    private Map<String, List<String>> categoriesAndTags = new HashMap<>();
     private static final Logger log = LoggerFactory.getLogger(KalshiService.class);
 
     private final RestClient restClient;
@@ -39,47 +35,31 @@ public class KalshiService {
         this.aiService = aiService;
     }
 
-    private KalshiTagsByCatsResponse queryCategoriesAndTags(){
-        log.info("Querying Kalshi for categories and tags");
-        try{
-            KalshiTagsByCatsResponse response = restClient.get()
-                    .uri("/trade-api/v2/search/tags_by_categories")
-                    .retrieve()
-                    .body(KalshiTagsByCatsResponse.class);
-            assert response != null;
-            //log.info(response.getTags_by_categories().toString());
-
-            return response;
-        }catch(Exception e){
-            log.error("Error querying Kalshi:", e);
-        }
-        return new KalshiTagsByCatsResponse();
-    }
-
-    public Map<String, List<String>> getCategoriesAndTags() {
-        if (categoriesAndTags.isEmpty()) {
-            KalshiTagsByCatsResponse response = queryCategoriesAndTags();
-            categoriesAndTags = response.getTags_by_categories();
-        }
-        return categoriesAndTags;
-    }
-
     public List<KalshiSeries> queryKalshiSeries(String category, String tags){
-        JsonNode response = restClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/trade-api/v2/series")
-                        .queryParam("category",category)
-                        .queryParam("tags",tags)
-                        .build()
-                )
-                .retrieve()
-                .body(JsonNode.class);
-
+        JsonNode response = null;
+        try{
+            response = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/trade-api/v2/series")
+                            .queryParam("category",category)
+                            .queryParam("tags",tags)
+                            .build()
+                    )
+                    .retrieve()
+                    .body(JsonNode.class);
+            Thread.sleep(200);
+        }catch(Exception e){
+            log.error(e.getMessage());
+        }
         //I want to break down the json response into a list of
         //{"category":"","tags":[],"ticker":"","title":""}
 
         List<KalshiSeries> result = new ArrayList<>();
         ObjectMapper mapper = new ObjectMapper();
+        if(response == null){
+            log.error("series request null");
+            return result;
+        }
         for (JsonNode series : response.get("series")) {
             result.add(new KalshiSeries(
                     series.get("category").asText(),
@@ -93,18 +73,31 @@ public class KalshiService {
     }
 
     private List<KalshiEvent> queryKalshiEvents(String seriesTicker, String seriesTitle){
-        JsonNode response = restClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("trade-api/v2/events")
-                        .queryParam("status","open")
-                        .queryParam("series_ticker",seriesTicker.toUpperCase())
-                        .build()
-                )
-                .retrieve()
-                .body(JsonNode.class);
+        JsonNode response=null;
+        try {
+            response = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("trade-api/v2/events")
+                            .queryParam("status", "open")
+                            .queryParam("series_ticker", seriesTicker.toUpperCase())
+                            .build()
+                    )
+                    .retrieve()
+                    .body(JsonNode.class);
+            Thread.sleep(200);
+        }
+        catch (Exception e){
+            log.error(e.getMessage());
+        }
+        //log.info("response {} ",response);
         List<KalshiEvent> result = new ArrayList<>();
         ObjectMapper mapper = new ObjectMapper();
+        if(response == null){
+            log.error("events request null");
+            return result;
+        }
         for (JsonNode event : response.get("events")) {
+            //log.info(event.get("title").asText());
             result.add(new KalshiEvent(
                     event.get("category").asText(),
                     event.get("series_ticker").asText(),
@@ -123,6 +116,7 @@ public class KalshiService {
         for (Story story : stories) {
             //query kalshi series
             List<KalshiSeries> kalshiSeries = queryKalshiSeries(story.getCategory(), String.join(",", story.getTags()));
+            log.info("getting events for {} series",kalshiSeries.size());
             for (KalshiSeries series : kalshiSeries) {
                 //query kalshi event
                 kalshiEvents = Stream.of(kalshiEvents,queryKalshiEvents(series.getTicker(), series.getTitle()))
@@ -137,6 +131,7 @@ public class KalshiService {
     public List<KalshiEvent> pollRssAndGetKalshiEvents(){
             FeedPollingResponse response = feedPollingService.pollFeed();
             List<Story> stories = aiService.getStories(feedPollingService.getTitlesAsFlatString(response.entries()));
+            log.info("Got {} stories", stories.size());
             List<KalshiEvent> events = getKalshiEventsFromStories(stories);
             return events;
     }

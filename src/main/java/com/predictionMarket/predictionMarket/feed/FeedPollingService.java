@@ -30,7 +30,7 @@ public class FeedPollingService {
             @Value("${feed.google.news.url}") String googleFeedUrl,
             @Value("${feed.fox.news.us.url}") String FoxUSFeedUrl,
             @Value("${feed.fox.news.world.url}") String FoxWorldFeedUrl,
-            @Value("${feed.initial.lookback.hours:1}") int initialLookbackHours) {
+            @Value("${feed.initial.lookback.hours:.25}") float initialLookbackHours) {
         this.rssFeeds = new ArrayList<String>();
         this.rssFeeds.add(googleFeedUrl);
         this.rssFeeds.add(FoxUSFeedUrl);
