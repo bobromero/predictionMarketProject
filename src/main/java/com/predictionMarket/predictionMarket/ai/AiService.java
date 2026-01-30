@@ -39,6 +39,7 @@ public class AiService {
 
 
     public String QueryGrok(Map<String, List<String>> categoriesAndTags, String prompt){
+        log.info("prompt={}",prompt);
         String systemPrompt ="""
             You are a classification assistant. Given a list of titles, you must classify them into a list of "stories" where each story has a 1 sentence headline categorizing titles that are likely related to the same event.
             You will also give each story exactly one category and one or two relevant tags from that category.
@@ -72,6 +73,7 @@ public class AiService {
                 .retrieve()
                 .body(AiResponse.class);
         assert response != null;
+        log.info("Grok query response {}", response.getText());
         return response.getText();
     }
 
@@ -84,6 +86,7 @@ public class AiService {
     public List<Story> getStories(String prompt){
         log.info("Getting stories for prediction market");
         String grokStories = getGrokStories(prompt);
+        log.info("Grok stories {}", grokStories);
         List<Story> stories = new ArrayList<>();
         ObjectMapper mapper = new ObjectMapper();
         JsonNode json = mapper.readTree(grokStories);

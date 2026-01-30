@@ -30,7 +30,7 @@ public class FeedPollingService {
             @Value("${feed.google.news.url}") String googleFeedUrl,
             @Value("${feed.fox.news.us.url}") String FoxUSFeedUrl,
             @Value("${feed.fox.news.world.url}") String FoxWorldFeedUrl,
-            @Value("${feed.initial.lookback.hours:24}") int initialLookbackHours) {
+            @Value("${feed.initial.lookback.hours:1}") int initialLookbackHours) {
         this.rssFeeds = new ArrayList<String>();
         this.rssFeeds.add(googleFeedUrl);
         this.rssFeeds.add(FoxUSFeedUrl);
@@ -101,5 +101,13 @@ public class FeedPollingService {
             entry.getPublishedDate() != null ? entry.getPublishedDate().toInstant() : null,
             entry.getAuthor()
         );
+    }
+
+    public String getTitlesAsFlatString(List<FeedEntry> entries) {
+        String result = "";
+        for (FeedEntry feedEntry : entries) {
+            result = result.concat(feedEntry.title());
+        }
+        return result;
     }
 }

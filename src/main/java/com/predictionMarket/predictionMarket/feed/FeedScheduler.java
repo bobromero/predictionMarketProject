@@ -16,7 +16,7 @@ public class FeedScheduler {
         this.feedPollingService = feedPollingService;
     }
 
-    @Scheduled(fixedRateString = "${feed.poll.interval:300000}")
+    //@Scheduled(fixedRateString = "${feed.poll.interval:300000}")
     public void scheduledPoll() {
         log.info("Starting scheduled feed poll");
         try {

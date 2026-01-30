@@ -18,9 +18,9 @@ public class AiController {
         this.aiService=aiService;
     }
 
-    @GetMapping("/{pv}")
-    public List<Story> getAi(@PathVariable String pv){
+    @PostMapping("/stories")
+    public List<Story> getAi(@RequestBody String articleTitles){
 
-        return aiService.getStories(pv);
+        return aiService.getStories(articleTitles);
     }
 }
