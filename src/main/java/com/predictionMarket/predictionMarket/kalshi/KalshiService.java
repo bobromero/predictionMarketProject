@@ -30,7 +30,7 @@ public class KalshiService {
                     .retrieve()
                     .body(KalshiTagsByCatsResponse.class);
             assert response != null;
-            log.info(response.getTags_by_categories().toString());
+            //log.info(response.getTags_by_categories().toString());
 
             return response;
         }catch(Exception e){

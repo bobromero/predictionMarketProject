@@ -1,11 +1,11 @@
 package com.predictionMarket.predictionMarket.ai;
 
+import com.predictionMarket.predictionMarket.Story.Story;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import tools.jackson.databind.JsonNode;
+
+import java.util.List;
 
 @RestController
 @RequestMapping(path="/api/v1/ai")
@@ -19,7 +19,8 @@ public class AiController {
     }
 
     @GetMapping("/{pv}")
-    public String getAi(@PathVariable String pv){
+    public List<Story> getAi(@PathVariable String pv){
+
         return aiService.getStories(pv);
     }
 }

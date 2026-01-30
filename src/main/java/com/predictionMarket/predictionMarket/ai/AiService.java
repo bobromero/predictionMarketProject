@@ -1,5 +1,6 @@
 package com.predictionMarket.predictionMarket.ai;
 
+import com.predictionMarket.predictionMarket.Story.Story;
 import com.predictionMarket.predictionMarket.kalshi.KalshiService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +13,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -36,53 +38,32 @@ public class AiService {
     }
 
 
-    public String QueryGrok(String prompt){
-        log.info("Querying grok for prediction market");
-        Map<String,Object> request = Map.of(
-                "model","grok-4-1-fast-reasoning",
-                "input", List.of(
-                        Map.of("role","system","content","return only 'true' or 'false' if the prompt relates to trump"),
-                        Map.of("role","user","content",prompt)
-                )
-        );
-        log.info(request.toString());
-        AiResponse response = restClient.post()
-                .uri("/v1/responses")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + apiKey)
-                .body(request)
-                .retrieve()
-                .body(AiResponse.class);
-        log.info(response.toString());
-        return response.getText();
-    }
-    public String getStories(String prompt){
-        log.info("Getting stories for prediction market");
-        Map<String, List<String>> categoriesAndTags = kalshiService.getCategoriesAndTags();
-        log.info("Stories for prediction market: " + categoriesAndTags);
-        log.info("Querying grok for prediction market");
+    public String QueryGrok(Map<String, List<String>> categoriesAndTags, String prompt){
         String systemPrompt ="""
-            You are a classification assistant. Given a question, you must classify it into exactly one category and one or two relevant tags from that category.
+            You are a classification assistant. Given a list of titles, you must classify them into a list of "stories" where each story has a 1 sentence headline categorizing titles that are likely related to the same event.
+            You will also give each story exactly one category and one or two relevant tags from that category.
+            
+            Title(s):
+            %s
             
             Available categories and tags:
             %s
             
             You MUST respond with ONLY valid JSON in this exact format, nothing else:
-            {"category": "Category Name", "tags": ["tag1", "tag2"]}
+            {"stories":["headline":"Story Headline","category": "Category Name", "tags": ["tag1", "tag2"]]}
             
             Rules:
+            - Keep story headlines brief ONE sentence
             - Pick exactly ONE category
             - Pick ONE or TWO tags from that category only
             - No explanation, no extra text, just the JSON
-            """.formatted(categoriesAndTags);
+            """.formatted(prompt,categoriesAndTags);
         Map<String,Object> request = Map.of(
                 "model","grok-4-1-fast-reasoning",
                 "input", List.of(
-                        Map.of("role","system","content",systemPrompt),
-                        Map.of("role","user","content",prompt)
+                        Map.of("role","system","content",systemPrompt)
                 )
         );
-        log.info(request.toString());
         AiResponse response = restClient.post()
                 .uri("/v1/responses")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -90,8 +71,43 @@ public class AiService {
                 .body(request)
                 .retrieve()
                 .body(AiResponse.class);
-
-        log.info(response.toString());
+        assert response != null;
         return response.getText();
+    }
+
+    public String getGrokStories(String prompt){
+        log.info("Getting stories for prediction market");
+        Map<String, List<String>> categoriesAndTags = kalshiService.getCategoriesAndTags();
+
+        return QueryGrok(categoriesAndTags, prompt);
+    }
+    public List<Story> getStories(String prompt){
+        log.info("Getting stories for prediction market");
+        String grokStories = getGrokStories(prompt);
+        List<Story> stories = new ArrayList<>();
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode json = mapper.readTree(grokStories);
+        try {
+            for (JsonNode storiesNode : json.get("stories")) {
+                Story story = new Story();
+                story.setHeadline(storiesNode.get("headline").asText());
+                story.setCategory(storiesNode.get("category").asText());
+
+                List<String> tagsList = new ArrayList<>();
+                for (JsonNode tag: storiesNode.get("tags")){
+                    tagsList.add(tag.asText());
+                }
+                story.setTags(tagsList);
+
+                stories.add(story);
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            log.error("Failed to parse json {}",json);
+            log.error("Error getting stories for prediction market",e);
+        }
+        log.info(stories.toString());
+        return stories;
     }
 }
