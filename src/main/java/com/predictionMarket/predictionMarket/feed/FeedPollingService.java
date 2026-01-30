@@ -11,11 +11,8 @@ import org.springframework.stereotype.Service;
 
 import java.net.URI;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -24,60 +21,65 @@ public class FeedPollingService {
 
     private static final Logger log = LoggerFactory.getLogger(FeedPollingService.class);
 
-    private final String feedUrl;
-    private final int initialLookbackHours;
+    private final List<String> rssFeeds;
     private final AtomicReference<Instant> lastPollTimestamp = new AtomicReference<>();
+    private final Set<String> seenLinks = ConcurrentHashMap.newKeySet();
     private final List<FeedEntry> storedEntries = new CopyOnWriteArrayList<>();
 
     public FeedPollingService(
-            @Value("${feed.google.news.url}") String feedUrl,
+            @Value("${feed.google.news.url}") String googleFeedUrl,
+            @Value("${feed.fox.news.us.url}") String FoxUSFeedUrl,
+            @Value("${feed.fox.news.world.url}") String FoxWorldFeedUrl,
             @Value("${feed.initial.lookback.hours:24}") int initialLookbackHours) {
-        this.feedUrl = feedUrl;
-        this.initialLookbackHours = initialLookbackHours;
+        this.rssFeeds = new ArrayList<String>();
+        this.rssFeeds.add(googleFeedUrl);
+        this.rssFeeds.add(FoxUSFeedUrl);
+        this.rssFeeds.add(FoxWorldFeedUrl);
     }
 
     public FeedPollingResponse pollFeed() {
         Instant now = Instant.now();
         Instant previousPoll = lastPollTimestamp.get();
 
-        Instant filterCutoff = previousPoll != null
-            ? previousPoll
-            : now.minus(initialLookbackHours, ChronoUnit.HOURS);
+        List<FeedPollingResponse> pollingResponses = new ArrayList<>();
 
-        log.info("Polling feed: {} (filtering entries after {})", feedUrl, filterCutoff);
+        for (String feedUrl : rssFeeds) {
+            log.info("Polling feed: {} (tracking {} seen links)", feedUrl, seenLinks.size());
 
-        try {
-            SyndFeedInput input = new SyndFeedInput();
-            SyndFeed feed;
+            try {
+                SyndFeedInput input = new SyndFeedInput();
+                SyndFeed feed;
 
-            try (XmlReader reader = new XmlReader(URI.create(feedUrl).toURL())) {
-                feed = input.build(reader);
+                try (XmlReader reader = new XmlReader(URI.create(feedUrl).toURL())) {
+                    feed = input.build(reader);
+                }
+
+                List<FeedEntry> entries = feed.getEntries().stream()
+                        .filter(entry -> entry.getLink() != null && !seenLinks.contains(entry.getLink()))
+                        .map(this::toFeedEntry)
+                        .toList();
+
+                // Add new links to seen set
+                entries.forEach(entry -> seenLinks.add(entry.link()));
+
+                storedEntries.addAll(entries);
+                lastPollTimestamp.set(now);
+
+                log.info("Poll complete. Found {} new entries, total stored: {}", entries.size(), storedEntries.size());
+
+                pollingResponses.add( new FeedPollingResponse(
+                        entries,
+                        now,
+                        previousPoll,
+                        entries.size()
+                ));
+
+            } catch (Exception e) {
+                log.error("Error polling feed: {}", e.getMessage(), e);
+                throw new RuntimeException("Failed to poll RSS feed", e);
             }
-
-            List<FeedEntry> entries = feed.getEntries().stream()
-                .filter(entry -> {
-                    Date pubDate = entry.getPublishedDate();
-                    return pubDate != null && pubDate.toInstant().isAfter(filterCutoff);
-                })
-                .map(this::toFeedEntry)
-                .toList();
-
-            storedEntries.addAll(entries);
-            lastPollTimestamp.set(now);
-
-            log.info("Poll complete. Found {} new entries, total stored: {}", entries.size(), storedEntries.size());
-
-            return new FeedPollingResponse(
-                entries,
-                now,
-                previousPoll,
-                entries.size()
-            );
-
-        } catch (Exception e) {
-            log.error("Error polling feed: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to poll RSS feed", e);
         }
+        return new FeedPollingResponse(pollingResponses);
     }
 
     public Instant getLastPollTimestamp() {
@@ -96,7 +98,6 @@ public class FeedPollingService {
         return new FeedEntry(
             entry.getTitle(),
             entry.getLink(),
-            entry.getDescription() != null ? entry.getDescription().getValue() : null,
             entry.getPublishedDate() != null ? entry.getPublishedDate().toInstant() : null,
             entry.getAuthor()
         );
