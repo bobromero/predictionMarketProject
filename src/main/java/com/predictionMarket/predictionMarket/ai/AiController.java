@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import tools.jackson.databind.JsonNode;
 
 @RestController
 @RequestMapping(path="/api/v1/ai")
@@ -19,6 +20,6 @@ public class AiController {
 
     @GetMapping("/{pv}")
     public String getAi(@PathVariable String pv){
-        return aiService.QueryGrok(pv);
+        return aiService.getStories(pv);
     }
 }
