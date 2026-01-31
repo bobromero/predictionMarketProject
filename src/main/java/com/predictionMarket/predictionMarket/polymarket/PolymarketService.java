@@ -73,15 +73,13 @@ public class PolymarketService {
         //give AI prompt and return stories
         log.info("querying grok for stories");
         String prompt = """
-            You MUST respond with ONLY valid JSON in this exact format, nothing else:
-            {"stories":[{"headline":"Story Headline","query": "max 1 sentence query"}]}
             You are a classification assistant ONLY RETURN JSON. Given a list of titles, classify them into "stories" where each story has a 1 sentence headline categorizing titles that are likely related to the same event.
-            Also add a query for each story to find events that might happen in the future because of this story and add it to the json.
+            Also add a query for each story 1 - 5 key words as it needs to be concise
             Rules:
             - Keep story headlines brief ONE sentence
-            - No explanation, no extra text, just the JSON
-            - ONLY VALID JSON, no other words/ tokens
-            - YOUR RESPONSE MUST ONLY BE VALID JSON
+            - YOUR RESPONSE MUST ONLY BE VALID JSON IN THIS FORMAT
+            {"stories":[{"headline":"Story Headline","query": "encapsulate the story in 1-5 key words"}]}
+            
             Title(s):
             %s
             """.formatted(articleTitles);
@@ -137,5 +135,7 @@ public class PolymarketService {
         }
         return polymarketNewsEntries;
     }
+
+
 
 }
