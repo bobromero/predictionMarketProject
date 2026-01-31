@@ -1,9 +1,9 @@
 package com.predictionMarket.predictionMarket.ai;
 
-import com.predictionMarket.predictionMarket.Story.Story;
+import com.predictionMarket.predictionMarket.Story.KalshiStory;
+import com.predictionMarket.predictionMarket.kalshi.KalshiService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import tools.jackson.databind.JsonNode;
 
 import java.util.List;
 
@@ -11,16 +11,16 @@ import java.util.List;
 @RequestMapping(path="/api/v1/ai")
 public class AiController {
 
-    private AiService aiService;
+    private KalshiService kalshiService;
 
     @Autowired
-    public void setAiService(AiService aiService){
-        this.aiService=aiService;
+    public void setAiService(KalshiService kalshiService){
+        this.kalshiService=kalshiService;
     }
 
     @PostMapping("/stories")
-    public List<Story> getAi(@RequestBody String articleTitles){
+    public List<KalshiStory> getAiStoriesForKalshi(@RequestBody String articleTitles){
 
-        return aiService.getStories(articleTitles);
+        return kalshiService.getStoriesForKalshi(articleTitles);
     }
 }

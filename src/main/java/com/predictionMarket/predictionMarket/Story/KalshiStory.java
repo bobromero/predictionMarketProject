@@ -1,10 +1,8 @@
 package com.predictionMarket.predictionMarket.Story;
 
-import tools.jackson.databind.JsonNode;
-
 import java.util.List;
 
-public class Story {
+public class KalshiStory {
     private String headline;
     private String category;
     private List<String> tags;

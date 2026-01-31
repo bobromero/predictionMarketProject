@@ -18,7 +18,7 @@ public class StoryController {
     }
 
     @GetMapping
-    public List<Story> getStories(){
+    public List<KalshiStory> getStories(){
         return storyService.getStories();
     }
 }
