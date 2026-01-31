@@ -10,6 +10,7 @@ public class PolymarketStory {
     String searchQ;
     List<PolymarketEvent> polymarketEvents = new ArrayList<>();
 
+
     public List<PolymarketEvent> getPolymarketEvents() {
         return polymarketEvents;
     }

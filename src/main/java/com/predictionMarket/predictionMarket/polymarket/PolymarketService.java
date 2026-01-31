@@ -61,8 +61,9 @@ public class PolymarketService {
             polymarketEvents.add(new PolymarketEvent(
                     event.get("id").asText(),
                     event.get("image").asText(),
+                    event.get("slug").asText(),
                     event.get("title").asText(),
-                    event
+                    event.get("closed").asText()
             ));
         }
         return polymarketEvents;
@@ -112,12 +113,29 @@ public class PolymarketService {
         return stories;
     }
 
+    private List<PolymarketEvent> filterClosedEvents(List<PolymarketEvent> polymarketEvents) {
+        List<PolymarketEvent> filteredEvents = new ArrayList<>();
+        for (PolymarketEvent polymarketEvent : polymarketEvents) {
+            if (polymarketEvent.closed.equals("false")){
+                filteredEvents.add(polymarketEvent);
+            }
+        }
+        return filteredEvents;
+    }
 
-    public List<PolymarketEvent> pollRssAndGetPolymarketEvents(){
+    public List<PolymarketNewsEntry> pollRssAndGetPolymarketEvents(){
         FeedPollingResponse response = feedPollingService.pollFeed();
         log.info("getting stories");
         List<PolymarketStory> stories = getStories(feedPollingService.getTitlesAsFlatString(response.entries()));
         log.info("Got {} stories", stories.size());
-        return stories.stream().flatMap(story -> story.getPolymarketEvents().stream()).toList();
+        List<PolymarketNewsEntry> polymarketNewsEntries = new ArrayList<>();
+        for (PolymarketStory story : stories) {
+            polymarketNewsEntries.add(new PolymarketNewsEntry(
+                    story,
+                    filterClosedEvents(story.getPolymarketEvents())
+            ));
+        }
+        return polymarketNewsEntries;
     }
+
 }
