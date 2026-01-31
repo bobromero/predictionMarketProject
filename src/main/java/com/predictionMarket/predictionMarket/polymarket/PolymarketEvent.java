@@ -1,5 +1,7 @@
 package com.predictionMarket.predictionMarket.polymarket;
 
+import java.util.List;
+
 public class PolymarketEvent {
     String id;
     String imageUrl;
@@ -7,17 +9,19 @@ public class PolymarketEvent {
     String eventUrl;
     String title;
     String closed;
+    List<PolymarketMarket> markets;
 
 
 
 
-    public PolymarketEvent(String id, String imageUrl, String slug, String title,  String closed) {
+    public PolymarketEvent(String id, String imageUrl, String slug, String title,  String closed,List<PolymarketMarket> markets) {
         this.id = id;
         this.imageUrl = imageUrl;
         this.slug = slug;
         this.eventUrl = "https://polymarket.com/event/"+slug;
         this.title = title;
         this.closed = closed;
+        this.markets = markets;
     }
 
     public String getId() {
@@ -63,5 +67,13 @@ public class PolymarketEvent {
 
     public void setClosed(String closed) {
         this.closed = closed;
+    }
+
+    public List<PolymarketMarket> getMarkets() {
+        return markets;
+    }
+
+    public void setMarkets(List<PolymarketMarket> markets) {
+        this.markets = markets;
     }
 }

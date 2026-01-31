@@ -58,12 +58,27 @@ public class PolymarketService {
     private List<PolymarketEvent> parsePolymarketEvents(JsonNode response){
         List<PolymarketEvent> polymarketEvents = new ArrayList<>();
         for (JsonNode event : response.get("events")){
+            List<PolymarketMarket>markets = new ArrayList<>();
+            for (JsonNode market : event.get("markets")){
+                if (market.get("closed").asBoolean()){
+                    continue;
+                }
+                markets.add(new PolymarketMarket(
+                        market.get("question").asText(),
+                        market.get("slug").asText(),
+                        market.get("spread").asFloat(),
+                        market.get("outcomePrices"),
+                        market.get("outcomes"),
+                        market.get("closed").asText()
+                ));
+            }
             polymarketEvents.add(new PolymarketEvent(
                     event.get("id").asText(),
                     event.get("image").asText(),
                     event.get("slug").asText(),
                     event.get("title").asText(),
-                    event.get("closed").asText()
+                    event.get("closed").asText(),
+                    markets
             ));
         }
         return polymarketEvents;
@@ -98,7 +113,7 @@ public class PolymarketService {
                 JsonNode json = queryPolymarketSearch(story.getSearchQ());
                 //map JSON onto event and add
                 log.info("adding event {}", json);
-                story.setPolymarketEvents(parsePolymarketEvents(json));
+                story.setPolymarketEvents(filterClosedEvents(parsePolymarketEvents(json)));
 
                 stories.add(story);
             }
@@ -129,8 +144,7 @@ public class PolymarketService {
         List<PolymarketNewsEntry> polymarketNewsEntries = new ArrayList<>();
         for (PolymarketStory story : stories) {
             polymarketNewsEntries.add(new PolymarketNewsEntry(
-                    story,
-                    filterClosedEvents(story.getPolymarketEvents())
+                    story
             ));
         }
         return polymarketNewsEntries;

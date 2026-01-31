@@ -6,11 +6,9 @@ import java.util.List;
 
 public class PolymarketNewsEntry {
     PolymarketStory story;
-    List<PolymarketEvent> events;
 
-    public PolymarketNewsEntry(PolymarketStory story, List<PolymarketEvent> events) {
+    public PolymarketNewsEntry(PolymarketStory story) {
         this.story = story;
-        this.events = events;
     }
 
     public PolymarketStory getStory() {
@@ -19,13 +17,5 @@ public class PolymarketNewsEntry {
 
     public void setStory(PolymarketStory story) {
         this.story = story;
-    }
-
-    public List<PolymarketEvent> getEvents() {
-        return events;
-    }
-
-    public void setEvents(List<PolymarketEvent> events) {
-        this.events = events;
     }
 }
