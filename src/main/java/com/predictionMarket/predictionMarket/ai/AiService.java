@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestTemplate;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -28,6 +29,25 @@ public class AiService {
     public AiService(@Value("${grok.api.url}") String url, KalshiCategoryService kalshiCategoryService) {
         this.restClient = RestClient.builder().baseUrl(url).build();
         this.kalshiCategoryService = kalshiCategoryService;
+    }
+
+    public String SimpleQuery(String prompt){
+        Map<String,Object> request = Map.of(
+                "model", "grok-4-1-fast-reasoning",
+                "input", List.of(
+                        Map.of("role", "user", "content", prompt)
+                )
+        );
+        AiResponse response = restClient.post()
+                .uri("/v1/responses")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + apiKey)
+                .body(request)
+                .retrieve()
+                .body(AiResponse.class);
+        assert response != null;
+        log.info("Grok query response {}", response.getText());
+        return response.getText();
     }
 
 
