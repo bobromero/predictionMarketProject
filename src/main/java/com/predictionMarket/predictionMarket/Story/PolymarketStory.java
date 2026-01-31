@@ -11,14 +11,6 @@ public class PolymarketStory {
     List<PolymarketEvent> polymarketEvents = new ArrayList<>();
 
 
-    public List<PolymarketEvent> getPolymarketEvents() {
-        return polymarketEvents;
-    }
-
-    public void setPolymarketEvents(List<PolymarketEvent> polymarketEvents) {
-        this.polymarketEvents = polymarketEvents;
-    }
-
     public PolymarketStory(List<PolymarketEvent> polymarketEvents, String searchQ, String headline) {
         this.polymarketEvents = polymarketEvents;
         this.searchQ = searchQ;
@@ -27,6 +19,13 @@ public class PolymarketStory {
 
     public PolymarketStory() {
 
+    }
+    public List<PolymarketEvent> getPolymarketEvents() {
+        return polymarketEvents;
+    }
+
+    public void setPolymarketEvents(List<PolymarketEvent> polymarketEvents) {
+        this.polymarketEvents = polymarketEvents;
     }
 
     public String getHeadline() {
@@ -44,4 +43,5 @@ public class PolymarketStory {
     public void setSearchQ(String searchQ) {
         this.searchQ = searchQ;
     }
+
 }

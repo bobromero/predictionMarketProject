@@ -21,4 +21,10 @@ public class PolymarketController {
     public List<PolymarketNewsEntry> getEvents(){
         return polymarketService.pollRssAndGetPolymarketEvents();
     }
+
+    @GetMapping(path = "/insights")
+    public List<PolymarketNewsEntry> getInsights(){
+        return polymarketService.getEventsAndAiInsight();
+    }
+
 }

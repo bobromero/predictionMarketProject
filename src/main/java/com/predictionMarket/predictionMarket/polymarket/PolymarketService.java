@@ -4,6 +4,7 @@ import com.predictionMarket.predictionMarket.Story.PolymarketStory;
 import com.predictionMarket.predictionMarket.ai.AiService;
 import com.predictionMarket.predictionMarket.feed.FeedPollingResponse;
 import com.predictionMarket.predictionMarket.feed.FeedPollingService;
+import com.predictionMarket.predictionMarket.util.JsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -148,6 +149,26 @@ public class PolymarketService {
             ));
         }
         return polymarketNewsEntries;
+    }
+
+
+    public List<PolymarketNewsEntry> getEventsAndAiInsight(){
+
+        String prompt= """
+                You are an agent tasked with finding connections between news stories and prediction market outcomes.
+                Find the events that are most likely to be impacted by the news.
+                Give each story a likelihood (1-10) of how this will affect these events, and sort by highest likelihood.
+                Stories:
+                """;
+        List<PolymarketNewsEntry> entries = pollRssAndGetPolymarketEvents();
+//        for (PolymarketNewsEntry entry : entries) {
+//            //query grok and add result to the entry, return the entry
+//            entry.aiInsight = aiService.SimpleQuery(prompt+ JsonUtil.toJson(new CondensedStory(entry.story)));
+//        }
+        PolymarketNewsEntry entry = entries.getFirst();
+        entry.aiInsight = aiService.SimpleQuery(prompt+ JsonUtil.toJson(new CondensedStory(entry.story)));
+
+        return entries;
     }
 
 

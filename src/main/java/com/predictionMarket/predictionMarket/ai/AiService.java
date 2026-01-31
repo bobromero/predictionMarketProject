@@ -2,6 +2,7 @@ package com.predictionMarket.predictionMarket.ai;
 
 import com.predictionMarket.predictionMarket.Story.KalshiStory;
 import com.predictionMarket.predictionMarket.kalshi.KalshiCategoryService;
+import com.predictionMarket.predictionMarket.util.JsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,7 +47,7 @@ public class AiService {
                 .retrieve()
                 .body(AiResponse.class);
         assert response != null;
-        log.info("Grok query response {}", response.getText());
+        log.info("Grok query response {}", JsonUtil.toJson(response));
         return response.getText();
     }
 
